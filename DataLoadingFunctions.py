@@ -22,7 +22,11 @@ class sheet_table:
 
         :returns: df
         '''
-        df=pd.read_excel(fname,sheet_name=s.SN,skiprows=s.row_skip,nrows=s.nrows-s.row_skip,usecols=s.cols)
+        # To allow for row skip defined and not nrows check the case. NONE for rows and cols do not cause issues
+        if s.nrows:
+            df=pd.read_excel(fname,sheet_name=s.sheet_name,skiprows=s.row_skip,nrows=s.nrows-s.row_skip,usecols=s.cols)
+        else:
+            df=pd.read_excel(fname,sheet_name=s.sheet_name,skiprows=s.row_skip,usecols=s.cols)
         return df
     def load_extra_tab(s,fname,i):
         ''' Loads a dataframe from the excel file at filename, sheet s.sheet_name.
@@ -33,7 +37,7 @@ class sheet_table:
 
         :returns: df
         '''
-        df=pd.read_excel(fname,sheet_name=s.SN,skiprows=s.row_skip,nrows=s.nrows,usecols=s.cols)
+        df=s.load(fname)
         for col_lab in df.keys():
             if '.%d'%i in col_lab:
                 df.rename(columns={col_lab:col_lab.replace('.%d'%i,'')},inplace=True)
@@ -65,7 +69,7 @@ def load_tab_list(tab_list,fname):
     df_tot.drop_duplicates(keep='first',ignore_index=True,inplace=True)
     return df_tot
 
-def Load_dfs_for_clustering(datafilename,col_labs,pathway1_tab_list,pathway2_tab_list,outcome_id_tab_list,expo_tab_list):
+def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathway2_tab_list,outcome_id_tab_list,expo_tab_list):
     '''
     :param datafilename: path and filename of excel spreedsheet containing data to load.
     :param col_loabs: dictionary of strings matching the column labels to desired information.
@@ -85,7 +89,7 @@ def Load_dfs_for_clustering(datafilename,col_labs,pathway1_tab_list,pathway2_tab
     byse_l      =col_labs['byse']
     rsid_lab    =col_labs['rsid']
     p1_lab      =col_labs['Pathway1_suffix']
-    p2_lab      =col_labs['Pathway1_suffix']
+    p2_lab      =col_labs['Pathway2_suffix']
     outcome_lab =col_labs['outcome_id']
     bxlab       =col_labs['bx']
     bxselab     =col_labs['bxse']
@@ -93,8 +97,8 @@ def Load_dfs_for_clustering(datafilename,col_labs,pathway1_tab_list,pathway2_tab
     expo_lab    =col_labs['expo_lab']
 
     # Load Pathway 1 and Pathway 2 colocalization scores.
-    pathway1_df     =load_tab_list(pathway1_tab_list,datafilename)[[rsid_lab,coloc_lab]]
-    pathway2_df     =load_tab_list(pathway2_tab_list,datafilename)[[rsid_lab,coloc_lab]]
+    pathway1_df     =load_tab_list(pathway1_tab_list,datafilename+ftype)[[rsid_lab,coloc_lab]]
+    pathway2_df     =load_tab_list(pathway2_tab_list,datafilename+ftype)[[rsid_lab,coloc_lab]]
     if coloc_lab+'_'+p1_lab in pathway1_df.keys() and coloc_lab+'_'+p2_lab in pathway2_df.keys():
         pathway_df      =pd.merge(pathway1_df,pathway2_df,how='inner',on=rsid_lab)
     else:
@@ -106,14 +110,14 @@ def Load_dfs_for_clustering(datafilename,col_labs,pathway1_tab_list,pathway2_tab
     logging.info('Pathway snp level data loaded')
     logging.info(ic(pathway_df.head()))
     # Retrieve the outcome_ids for getting the outcome results from open GWAS.
-    outcome_id_df=load_tab_list(outcome_id_tab_list,datafilename)[outcome_lab]
-    outcome_id_df.dropna(subset=[outcome_lab],inplace=True)
+    outcome_id_df=load_tab_list(outcome_id_tab_list,datafilename+ftype)[outcome_lab]
+    outcome_id_df.dropna(inplace=True)
     outcome_ids=outcome_id_df.values.tolist()
     logging.info('Outcome ids loaded')
     logging.info(ic(outcome_ids))
 
     # Load the SNP level data for the exposure
-    expo_df=load_tab_list(expo_tab_list,datafilename)[[rsid_lab,bxlab,bxselab]]
+    expo_df=load_tab_list(expo_tab_list,datafilename+ftype)[[rsid_lab,bxlab,bxselab]]
     expo_df.rename(columns={rsid_lab:'rsid',bxlab:'bx',bxselab:'bxse'},inplace=True)
     expo_df.dropna(subset=['rsid','bx','bxse'],inplace=True)
     logging.info('Exposure snp level data loaded')
@@ -165,7 +169,7 @@ def Load_dfs_for_clustering(datafilename,col_labs,pathway1_tab_list,pathway2_tab
     logging.info('File saved at '+datafilename+'FullResults.csv')
     return out_df
 
-def load_dfs_for_hypothesis_testing(datafilename,pathway_tab_list,col_labels,method=None):
+def load_dfs_for_hypothesis_testing(datafilename,ftype, pathway_tab_list,col_labels,method=None):
     '''Function to generalise creating a csv for hypothesis testing from an excel spreadsheet with tables. 
     The inputs need to be created by investigating the spreadsheet and matching the sheet names and row numbers. 
 
@@ -190,7 +194,7 @@ def load_dfs_for_hypothesis_testing(datafilename,pathway_tab_list,col_labels,met
     path_lab    =col_labels['path_lab']
 
     # Load the results for the pathway outcome level
-    pathway_df=load_tab_list(pathway_tab_list)
+    pathway_df=load_tab_list(pathway_tab_list,datafilename+ftype)
     # Initialise the desired format for the output dataframe
     hypo_col_labs=['Label','Outcome','bx','OR','se','nSNPs','Method']
     hypo_df=pd.DataFrame(columns=hypo_col_labs)
