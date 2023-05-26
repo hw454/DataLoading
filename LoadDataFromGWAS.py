@@ -54,7 +54,7 @@ hypo_cad_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway
 
 col_labs={'rsid':'SNP','a1':'effect allele','a2':'other allele','bx':'beta','bxse':'se','by':'beta','byse':'se',
           'Pathway1_suffix':'adipose','Pathway2_suffix':'brain','outcome':'trait','outcome_id':'id.outcome',
-          'coloc_lab':'PPA4','expo_lab':'BMI'}
+          'coloc_lab':'PPA4','expo_lab':'BMI','method_lab':'method'}
 alltables               ='41416_2022_2060_MOESM3_ESM'
 insheettyp              ='.xlsx'
 # Sheets within the spreadsheet containing pathway colocization scores
