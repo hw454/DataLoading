@@ -1,17 +1,19 @@
 
 import DataLoadingFunctions as dl
 import logging
+
 logging.basicConfig(filename='LoadDataFromGWAS.log', 
                     encoding='utf-8', 
                     level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-8s %(message)s \n',
-                    datefmt='%Y-%m-%d %H:%M:%S')
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filemode='w')
 
 '''Python script to load data on pathway identification and GWAS 
 data on the relationship to BMI and cancer outcome for the same SNPs.'''
 
 # SECTION 1 - INPUT DATA
-path='../Python/ICEP/'
+path='Data/'
 
 # Inputs for results from: 
 # "Harnessing tissue-specific genetic variation to dissect putative causal pathways between 
@@ -39,10 +41,10 @@ col_labels={'outcome_lab':'outcome','bx_lab':'bx','bxse_lab':'se','nsnp_lab':'ns
 logging.info('Manual inputs made for CAD paper')
 logging.info('-----------------------')
 # GET THE SNP LEVEL DATA FOR CLUSTERING
-fullres_cad_df=dl.Load_dfs_for_clustering(path+alltables,col_labs,pathway1_tab_list,pathway2_tab_list,
+fullres_cad_df=dl.Load_dfs_for_clustering(path+alltables,insheettyp,col_labs,pathway1_tab_list,pathway2_tab_list,
                            outcome_id_tab_list,expo_tab_list)
 # GET THE PATHWAY MR RESULTS FOR HYPOTHESIS TESTING
-hypo_cad_df=dl.load_dfs_for_hypothesis_testing(path+alltables,pathway_output_tab_list,col_labels,method_str)
+hypo_cad_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway_output_tab_list,col_labels,method_str)
 
 #--------------------------------------------------------------------------------------------
 # Altnerative Inputs for results from: 
@@ -73,9 +75,9 @@ col_labels={'outcome_lab':'outcome','bx_lab':'bx','bxse_lab':'se','nsnp_lab':'ns
 
 logging.info('Manual inputs made for Cancer paper')
 logging.info('-----------------------')
-fullres_cancer_df=dl.Load_dfs_for_clustering(path+alltables,col_labs,pathway1_tab_list,pathway2_tab_list,
+fullres_cancer_df=dl.Load_dfs_for_clustering(path+alltables,insheettyp,col_labs,pathway1_tab_list,pathway2_tab_list,
                            outcome_id_tab_list,expo_tab_list)
 # GET THE PATHWAY MR RESULTS FOR HYPOTHESIS TESTING
-hypo_cancer_df=dl.load_dfs_for_hypothesis_testing(path+alltables,pathway_output_tab_list,col_labels,method_str)
+hypo_cancer_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway_output_tab_list,col_labels,method_str)
 
 
