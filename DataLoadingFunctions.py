@@ -97,13 +97,16 @@ def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathwa
     expo_lab    =col_labs['expo_lab']
 
     # Load Pathway 1 and Pathway 2 colocalization scores.
-    pathway1_df     =load_tab_list(pathway1_tab_list,datafilename+ftype)[[rsid_lab,coloc_lab]]
-    pathway2_df     =load_tab_list(pathway2_tab_list,datafilename+ftype)[[rsid_lab,coloc_lab]]
-    if coloc_lab+'_'+p1_lab in pathway1_df.keys() and coloc_lab+'_'+p2_lab in pathway2_df.keys():
-        pathway_df      =pd.merge(pathway1_df,pathway2_df,how='inner',on=rsid_lab)
+    pathway1_df     =load_tab_list(pathway1_tab_list,datafilename+ftype)
+    pathway2_df     =load_tab_list(pathway2_tab_list,datafilename+ftype)
+    if coloc_lab+'_'+p1_lab in pathway1_df.keys() and coloc_lab+'_'+p2_lab in pathway1_df.keys():
+        '''Both pathways are already in the same table'''
+        pathway_df      =pathway1_df
     else:
+        '''Combine the two tables to get both pathways into one.'''
         pathway_df      =pd.merge(pathway1_df,pathway2_df,how='inner',on=rsid_lab,suffixes=('_'+p1_lab,'_'+p2_lab))
     pathway_df      =pathway_df[[rsid_lab,coloc_lab+'_'+p1_lab,coloc_lab+'_'+p2_lab]]
+    pathway_df.drop_duplicates(keep='first',inplace=True)
     pathway_df.dropna(subset=[rsid_lab,coloc_lab+'_'+p1_lab,coloc_lab+'_'+p2_lab],inplace=True)
     pathway_df.rename(columns={rsid_lab:'rsid'},inplace=True)
 
@@ -111,6 +114,8 @@ def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathwa
     logging.info(ic(pathway_df.head()))
     # Retrieve the outcome_ids for getting the outcome results from open GWAS.
     outcome_id_df=load_tab_list(outcome_id_tab_list,datafilename+ftype)[outcome_lab]
+    # Drop duplicates after loading since the same outcome id will match multiple variations in the other cols.
+    outcome_id_df.drop_duplicates(keep='first',inplace=True)
     outcome_id_df.dropna(inplace=True)
     outcome_ids=outcome_id_df.values.tolist()
     logging.info('Outcome ids loaded')
@@ -118,6 +123,7 @@ def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathwa
 
     # Load the SNP level data for the exposure
     expo_df=load_tab_list(expo_tab_list,datafilename+ftype)[[rsid_lab,bxlab,bxselab]]
+    expo_df.drop_duplicates(keep='first',inplace=True)
     expo_df.rename(columns={rsid_lab:'rsid',bxlab:'bx',bxselab:'bxse'},inplace=True)
     expo_df.dropna(subset=['rsid','bx','bxse'],inplace=True)
     logging.info('Exposure snp level data loaded')
@@ -126,8 +132,10 @@ def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathwa
     # Load the snp level data for the outcomes from open gwas
     logging.info('-----------------------')
     logging.info('Accessing Open GWAS')
-    assocs=pd.DataFrame.from_dict(igd.associations(expo_df['rsid'],outcome_ids,align_alleles=1, 
-                                                 palindromes=1))
+    assocs=pd.DataFrame.from_dict(igd.associations(expo_df['rsid'],outcome_ids,
+                                                   proxies=0,
+                                                   align_alleles=1, 
+                                                 palindromes=0))
     logging.info('Outcome snp level data loaded from open GWAS')
     logging.info('-----------------------')
     logging.info(ic(assocs.head()))
@@ -147,11 +155,11 @@ def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathwa
     out_df['a2']    =assocs[a2_lab]
     out_df['by']    =assocs[by_lab]
     out_df['byse']  =assocs[byse_l]
-    out_df['outcome']=[w.replace(" ","_") for w in assocs['trait']]
+    out_df['outcome']=[w.replace(" ","_").replace(";","") for w in assocs['trait']]
 
     logging.info('Data loaded for a1,a2,rsid,by,byse,chr.position')
     logging.info('Load the association between SNPs and exposure')
-    # Match the outcome and exposure pairs to fill in the bx, bxse and PPA4 scores.
+    # Match the outcome and exposure pairs to fill in the bx, bxse and Pffect_allele'PA4 scores.
     for rid in expo_df['rsid']:
         out_df.loc[out_df.rsid==rid,'bx']       =expo_df.loc[expo_df.rsid==rid,    'bx'].item()
         out_df.loc[out_df.rsid==rid,'bxse']     =expo_df.loc[expo_df.rsid==rid,    'bxse'].item()
@@ -169,7 +177,7 @@ def Load_dfs_for_clustering(datafilename,ftype,col_labs,pathway1_tab_list,pathwa
     logging.info('File saved at '+datafilename+'FullResults.csv')
     return out_df
 
-def load_dfs_for_hypothesis_testing(datafilename,ftype, pathway_tab_list,col_labels,method=None):
+def load_dfs_for_hypothesis_testing(datafilename,ftype, pathway_tab_list,col_labels,method=None,out_str=''):
     '''Function to generalise creating a csv for hypothesis testing from an excel spreadsheet with tables. 
     The inputs need to be created by investigating the spreadsheet and matching the sheet names and row numbers. 
 
@@ -192,25 +200,32 @@ def load_dfs_for_hypothesis_testing(datafilename,ftype, pathway_tab_list,col_lab
     bxse_lab    =col_labels['bxse_lab']
     nsnp_lab    =col_labels['nsnp_lab']
     path_lab    =col_labels['path_lab']
+    method_lab  =col_labels['method_lab']
 
     # Load the results for the pathway outcome level
     pathway_df=load_tab_list(pathway_tab_list,datafilename+ftype)
     # Initialise the desired format for the output dataframe
-    hypo_col_labs=['Label','Outcome','bx','OR','se','nSNPs','Method']
+    hypo_col_labs=['Label','Outcome','bx','se','nSNPs','Method']
     hypo_df=pd.DataFrame(columns=hypo_col_labs)
+    ic(pathway_df)
     if not method:
-        hypo_df.method=[w.replace(" ","_") for w in pathway_df.method_lab]
+        pathway_df=pathway_df[[method_lab,outcome_lab,path_lab,bx_lab,bxse_lab,nsnp_lab]]
+        pathway_df.drop_duplicates(keep='first',inplace=True)
+        hypo_df.method=[w.replace(" ","_") for w in pathway_df[method_lab]]
     else:
+        pathway_df=pathway_df[[outcome_lab,path_lab,bx_lab,bxse_lab,nsnp_lab]]
+        pathway_df.drop_duplicates(keep='first',inplace=True)
         hypo_df.Method  =method
-    hypo_df.Outcome =[w.replace(" ","_") for w in pathway_df[outcome_lab]]
-    hypo_df.Label   =[c+'_'+str(p) for c,p in zip(pathway_df[path_lab],hypo_df.Method)]
+    pathway_df.dropna(subset=[outcome_lab],inplace=True)
+    hypo_df.Outcome =[w.replace(" ","_").replace(";","") for w in pathway_df[outcome_lab]]
+    hypo_df.Label   =[str(c)+'_'+str(p) for c,p in zip(pathway_df[path_lab],hypo_df.Method)]
     hypo_df.bx      =pathway_df[bx_lab]
     hypo_df.se      =pathway_df[bxse_lab]
     hypo_df.nSNPs   =pathway_df[nsnp_lab]
     logging.info('Created hypothesis test csv.')
     logging.info(ic(hypo_df))
     hypo_df.to_csv(datafilename+'ForHypoTest.csv',index=False)
-    logging.info('file at '+datafilename+'ForHypoTest.csv')
+    logging.info('file at '+datafilename+out_str+'ForHypoTest.csv')
     return hypo_df
 
 
