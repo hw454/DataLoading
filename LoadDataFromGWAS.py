@@ -37,7 +37,8 @@ expo_tab_list      =[dl.sheet_table('Table 16',3)]
 # Set the input parameters based on the setup of the spreadsheet in the supplementary data
 pathway_output_tab_list=[dl.sheet_table('Table 22',5,18),dl.sheet_table('Table 22',20,29)]
 method_str='2SMR_Steiger_ivw'
-col_labels={'outcome_lab':'outcome','bx_lab':'bx','bxse_lab':'se','nsnp_lab':'nsnp','path_lab':'exposure'}
+col_labels={'outcome_lab':'outcome','bx_lab':'b','bxse_lab':'se','nsnp_lab':'nsnp',
+            'path_lab':'exposure','method_lab':''}
 logging.info('Manual inputs made for CAD paper')
 logging.info('-----------------------')
 # GET THE SNP LEVEL DATA FOR CLUSTERING
@@ -46,15 +47,24 @@ fullres_cad_df=dl.Load_dfs_for_clustering(path+alltables,insheettyp,col_labs,pat
 # GET THE PATHWAY MR RESULTS FOR HYPOTHESIS TESTING
 hypo_cad_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway_output_tab_list,col_labels,method_str)
 
+# REPEAT USING OR IN PLACE OF bx
+col_labels={'outcome_lab':'outcome','bx_lab':'OR','bxse_lab':'se','nsnp_lab':'nsnp',
+            'path_lab':'exposure','method_lab':''}
+# GET THE PATHWAY MR RESULTS FOR HYPOTHESIS TESTING
+out_str='_OR'
+hypo_cad_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway_output_tab_list,col_labels,method_str,out_str)
+
+
+
 #--------------------------------------------------------------------------------------------
 # Altnerative Inputs for results from: 
 # "Disentangling the aetiological pathways between body mass index and site-specific cancer 
 # risk using tissue-partitioned Mendelian randomisation"
 # Supplementary data available from: https://www.nature.com/articles/s41416-022-02060-6 
 
-col_labs={'rsid':'SNP','a1':'effect allele','a2':'other allele','bx':'beta','bxse':'se','by':'beta','byse':'se',
+col_labs={'rsid':'SNP','a1':'ea','a2':'nea','bx':'beta','bxse':'se','by':'beta','byse':'se',
           'Pathway1_suffix':'adipose','Pathway2_suffix':'brain','outcome':'trait','outcome_id':'id.outcome',
-          'coloc_lab':'PPA4','expo_lab':'BMI','method_lab':'method'}
+          'coloc_lab':'PPA4','expo_lab':'BMI'}
 alltables               ='41416_2022_2060_MOESM3_ESM'
 insheettyp              ='.xlsx'
 # Sheets within the spreadsheet containing pathway colocization scores
@@ -66,18 +76,19 @@ outcome_id_tab_list=[dl.sheet_table('Table 4',4,30),dl.sheet_table('Table 5',19)
                      dl.sheet_table('Table 7',14,44),dl.sheet_table('Table 8',3,19),
                      dl.sheet_table('Table 8',24,82)]
 # Sheets within the spreadshet containing the exposure snp analysis
-expo_tab_list=[dl.sheet_table('Table 1',5),dl.sheet_table('Table 2',5)]
+expo_tab_list=[dl.sheet_table('Table 1',5),]
 
 # Set the input parameters based on the setup of the spreadsheet in the supplementary data
-pathway_output_tab_list=[dl.sheet_table('Table 4',4,29),dl.sheet_table('Table 5',35,85),
-                         dl.sheet_table('Table 8',24,82)]
-col_labels={'outcome_lab':'outcome','bx_lab':'bx','bxse_lab':'se','nsnp_lab':'nsnp','path_lab':'exposure'}
+pathway_output_tab_list=[dl.sheet_table('Table 4',4,28),dl.sheet_table('Table 5',36,84),
+                         dl.sheet_table('Table 8',24,81)]
+col_labels={'outcome_lab':'outcome','bx_lab':'b','bxse_lab':'se','nsnp_lab':'nsnp',
+            'path_lab':'id.exposure','method_lab':'method'}
 
 logging.info('Manual inputs made for Cancer paper')
 logging.info('-----------------------')
 fullres_cancer_df=dl.Load_dfs_for_clustering(path+alltables,insheettyp,col_labs,pathway1_tab_list,pathway2_tab_list,
                            outcome_id_tab_list,expo_tab_list)
 # GET THE PATHWAY MR RESULTS FOR HYPOTHESIS TESTING
-hypo_cancer_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway_output_tab_list,col_labels,method_str)
+hypo_cancer_df=dl.load_dfs_for_hypothesis_testing(path+alltables,insheettyp,pathway_output_tab_list,col_labels)
 
 
