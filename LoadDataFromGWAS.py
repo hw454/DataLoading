@@ -13,7 +13,7 @@ logging.basicConfig(filename='LoadDataFromGWAS.log',
 data on the relationship to BMI and cancer outcome for the same SNPs.'''
 
 # SECTION 1 - INPUT DATA
-path='Data/'
+path='../Data/'
 
 # Inputs for results from: 
 # "Harnessing tissue-specific genetic variation to dissect putative causal pathways between 
