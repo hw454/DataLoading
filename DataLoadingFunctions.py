@@ -211,7 +211,7 @@ def load_dfs_for_hypothesis_testing(datafilename,ftype, pathway_tab_list,col_lab
     if not method:
         pathway_df=pathway_df[[method_lab,outcome_lab,path_lab,bx_lab,bxse_lab,nsnp_lab]]
         pathway_df.drop_duplicates(keep='first',inplace=True)
-        hypo_df.method=[w.replace(" ","_") for w in pathway_df[method_lab]]
+        hypo_df.Method=[w.replace(" ","_") for w in pathway_df[method_lab]]
     else:
         pathway_df=pathway_df[[outcome_lab,path_lab,bx_lab,bxse_lab,nsnp_lab]]
         pathway_df.drop_duplicates(keep='first',inplace=True)
